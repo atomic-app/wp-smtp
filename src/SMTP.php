@@ -106,26 +106,26 @@ class SMTP
      */
     protected function admin()
     {
-        if (! empty($_GET['verify-smtp']) && $_GET['verify-smtp'] === 'true' && wp_verify_nonce($_GET['_wpnonce'], 'verify-smtp')) {
+        if (!empty($_GET['verify-smtp']) && $_GET['verify-smtp'] === 'true' && wp_verify_nonce($_GET['_wpnonce'], 'verify-smtp')) {
             $this->verify();
         }
 
-        if (! $this->config()->username || ! $this->config()->password || ! $this->config()->host) {
+        if (!$this->config()->username || !$this->config()->password || !$this->config()->host) {
             return $this->notice(
-                'WP SMTP failed to find your SMTP credentials. Please define them in <code>.env</code> and <a href="'.wp_nonce_url(admin_url(add_query_arg('verify-smtp', 'true', 'index.php')), 'verify-smtp').'">click here</a> to test your configuration.',
+                'WP SMTP failed to find your SMTP credentials. Please define them in <code>.env</code> and <a href="' . wp_nonce_url(admin_url(add_query_arg('verify-smtp', 'true', 'index.php')), 'verify-smtp') . '">click here</a> to test your configuration.',
                 'error'
             );
         }
 
-        if (! get_option('wp_mail_verify')) {
+        if (!get_option('wp_mail_verify')) {
             return $this->notice(
-                'WP SMTP credentials found. Please <a href="'.wp_nonce_url(admin_url(add_query_arg('verify-smtp', 'true', 'index.php')), 'verify-smtp').'">click here</a> to test your configuration.'
+                'WP SMTP credentials found. Please <a href="' . wp_nonce_url(admin_url(add_query_arg('verify-smtp', 'true', 'index.php')), 'verify-smtp') . '">click here</a> to test your configuration.'
             );
         }
 
-        if (! $this->validate()) {
+        if (!$this->validate()) {
             return $this->notice(
-                'WP SMTP has detected a change in your credentials. Please <a href="'.wp_nonce_url(admin_url(add_query_arg('verify-smtp', 'true', 'index.php')), 'verify-smtp').'">click here</a> to test your configuration.'
+                'WP SMTP has detected a change in your credentials. Please <a href="' . wp_nonce_url(admin_url(add_query_arg('verify-smtp', 'true', 'index.php')), 'verify-smtp') . '">click here</a> to test your configuration.'
             );
         }
     }
@@ -166,8 +166,11 @@ class SMTP
      */
     protected function verify()
     {
-        require_once(ABSPATH . WPINC . '/class-phpmailer.php');
-        $mail = new \PHPMailer(true);
+        require_once(ABSPATH . WPINC . '/PHPMailer/Exception.php');
+        require_once(ABSPATH . WPINC . '/PHPMailer/PHPMailer.php');
+        require_once(ABSPATH . WPINC . '/PHPMailer/SMTP.php');
+
+        $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
 
         try {
             $mail->isSMTP();
@@ -182,7 +185,7 @@ class SMTP
             $mail->Port = $this->config()->port;
             $mail->Timeout = $this->config()->timeout;
 
-            $mail->setFrom('no-reply@'.preg_replace('/https?:\/\/(www\.)?/', '', get_bloginfo('url')), get_bloginfo('name'));
+            $mail->setFrom('no-reply@' . preg_replace('/https?:\/\/(www\.)?/', '', get_bloginfo('url')), get_bloginfo('name'));
             $mail->AddAddress(wp_get_current_user()->user_email);
 
             if ($this->config()->forceFrom && $this->config()->forceFromName) {
@@ -196,7 +199,7 @@ class SMTP
             $mail->Send();
             $mail->ClearAddresses();
             $mail->ClearAllRecipients();
-        } catch (\phpMailerException $error) {
+        } catch (\PHPMailer\PHPMailer\Exception $error) {
             return $this->notice(
                 $error->errorMessage(),
                 'error',
